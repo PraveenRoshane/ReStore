@@ -1,7 +1,7 @@
 import { ThemeProvider } from "@emotion/react";
 import { Container, createTheme, CssBaseline } from "@mui/material";
-import { useEffect, useState } from "react";
-import { Route, Routes } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
+import { Navigate, Route, Routes } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import AboutPage from "../../features/about/AboutPage";
 import Catalog from "../../features/Catalog/Catalog";
@@ -13,28 +13,31 @@ import 'react-toastify/dist/ReactToastify.css';
 import ServerError from "../erros/ServerError";
 import NotFound from "../erros/NotFound";
 import BasketPage from "../../features/basket/BasketPage";
-import { getCookie } from "../util/util";
-import agent from "../api/agent";
 import LoadingComponent from "./LoadingComponent";
 import CheckoutPage from "../../features/checkout/CheckoutPage";
-import { useAppDispatch } from "../store/configerStore";
-import { setBasket } from "../../features/basket/basketSlice";
+import { useAppDispatch, useAppSelector } from "../store/configerStore";
+import { fetchBasketAsync } from "../../features/basket/basketSlice";
+import Login from "../../features/account/Login";
+import Register from "../../features/account/Register";
+import { fetchCurrentUser } from "../../features/account/accountSlice";
+import ProtectedRoute from "./PrivateRoute";
 
 function App() {
   const dispatch = useAppDispatch();
   const [loading, setloading] = useState(true);
 
-  useEffect(() => {
-    const buyerId = getCookie('buyerId');
-    if (buyerId) {
-      agent.basket.get()
-        .then(basket => dispatch(setBasket(basket)))
-        .catch(error => console.log(error))
-        .finally(() => setloading(false));
-    } else {
-      setloading(false)
+  const initApp = useCallback(async () => {
+    try {
+      await dispatch(fetchCurrentUser());
+      await dispatch(fetchBasketAsync())
+    } catch (error) {
+      console.log(error);
     }
-  }, [setBasket])
+  }, [dispatch])
+
+  useEffect(() => {
+    initApp().then(() => setloading(false))
+  }, [initApp])
 
   const [darkMode, setdarkMode] = useState(false);
   const paletteType = darkMode ? 'dark' : 'light';
@@ -51,7 +54,7 @@ function App() {
     setdarkMode(!darkMode);
   }
 
-  if (loading) return <LoadingComponent message="Initialising app...." />
+  if (loading) return <LoadingComponent message="Initialising app...." />  
 
   return (
     <ThemeProvider theme={theme}>
@@ -67,7 +70,9 @@ function App() {
           <Route path='/contact' element={<ContactPage />} />
           <Route path='/server-error' element={<ServerError />} />
           <Route path='/basket' element={<BasketPage />} />
-          <Route path='/checkout' element={<CheckoutPage />} />
+          <Route path='/checkout' element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
+          <Route path='/login' element={<Login />} />
+          <Route path='/register' element={<Register />} />
           <Route element={<NotFound />} />
         </Routes>
       </Container>

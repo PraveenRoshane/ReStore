@@ -3,6 +3,7 @@ import { AppBar, Badge, Box, IconButton, List, ListItem, Switch, Toolbar, Typogr
 import { Link } from 'react-router-dom'
 import { NavLink } from 'react-router-dom'
 import { useAppSelector } from '../store/configerStore'
+import SignedinMenu from './SignedinMenu'
 
 interface Props {
     darkMode: boolean;
@@ -31,6 +32,7 @@ const navStyles = {
 
 export default function Header({ darkMode, handleThemeChange }: Props) {
     const { basket } = useAppSelector(state => state.basket)
+    const { user } = useAppSelector(state => state.account)
 
     const itemCount = basket?.items.reduce((sum, item) => sum + item.quantity, 0)
 
@@ -64,18 +66,23 @@ export default function Header({ darkMode, handleThemeChange }: Props) {
                             <ShoppingCartRounded />
                         </Badge>
                     </IconButton>
-                    <List sx={{ display: 'flex' }}>
-                        <ListItem sx={navStyles}>
-                            <NavLink to={'/login'} style={{ color: 'inherit', textDecoration: 'none' }}>
-                                LOGIN
-                            </NavLink>
-                        </ListItem>
-                        <ListItem sx={navStyles}>
-                            <NavLink to={'/register'} style={{ color: 'inherit', textDecoration: 'none' }}>
-                                REGISTER
-                            </NavLink>
-                        </ListItem>
-                    </List>
+                    {user ? (
+                        <SignedinMenu />
+                    ) : (
+                        <List sx={{ display: 'flex' }}>
+                            <ListItem sx={navStyles}>
+                                <NavLink to={'/login'} style={{ color: 'inherit', textDecoration: 'none' }}>
+                                    LOGIN
+                                </NavLink>
+                            </ListItem>
+                            <ListItem sx={navStyles}>
+                                <NavLink to={'/register'} style={{ color: 'inherit', textDecoration: 'none' }}>
+                                    REGISTER
+                                </NavLink>
+                            </ListItem>
+                        </List>
+                    )}
+
                 </Box>
 
 
